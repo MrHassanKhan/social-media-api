@@ -1,27 +1,27 @@
 version: '3.4'
 
 services:
-  socialmediaapi:
-    image: socialmediaapi
-    build:
-      dockerfile: Dockerfile
-      context: .
-      # Only will build development stage from our dockerfile
-      target: development
-    # Mount our host Directory to the docker container
-    # Mount (.) current directory to the docker container thomas/src/app
-    # reflect file changes from host to container
-    volumes:
-      - .:/usr/src/app
-    env_file:
-    - .env
-     # Run in Debug Mode: npm run start:debug --> Don't forget to start your vscode debugger!
-    # Run in dev Mode: npm run start:dev
-    command: npm run start:dev
-    ports:
-      - 3000:3000
-    depends_on:
-      - db
+  # socialmediaapi:
+  #   image: socialmediaapi
+  #   build:
+  #     dockerfile: Dockerfile
+  #     context: .
+  #     # Only will build development stage from our dockerfile
+  #     target: development
+  #   # Mount our host Directory to the docker container
+  #   # Mount (.) current directory to the docker container usr/src/app
+  #   # reflect file changes from host to container
+  #   volumes:
+  #     - .:/usr/src/app
+  #   env_file:
+  #   - .env
+  #    # Run in Debug Mode: npm run start:debug --> Don't forget to start your vscode debugger!
+  #   # Run in dev Mode: npm run start:dev
+  #   command: npm run start:dev
+  #   ports:
+  #     - 3000:3000
+  #   depends_on:
+  #     - db
 
   db:
     image: postgres
@@ -31,7 +31,7 @@ services:
     ports:
       - '5432:5432'
     volumes:
-      - social-media-postgres:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
 
   adminer:
     image: adminer
@@ -40,5 +40,5 @@ services:
       - 8080:8080
   
 volumes:
-  social-media-postgres:
+  postgres-data:
     
