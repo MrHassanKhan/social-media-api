@@ -5,6 +5,10 @@ import { UserEntity } from './entities/user.entity';
 import { FriendRequestEntity } from './entities/friend-request.entity';
 import { AuthService } from './services/auth.service';
 import { AuthController } from './controllers/auth.controller';
+import { UserService } from './services/user.service';
+import { UserController } from './controllers/user.controller';
+import { JwtGuard } from './guards/jwt.guard';
+import { JwtStrategy } from './guards/jwt.strategy';
 
 @Module({
   imports: [
@@ -16,8 +20,8 @@ import { AuthController } from './controllers/auth.controller';
     }),
     TypeOrmModule.forFeature([UserEntity, FriendRequestEntity]),
   ],
-  providers: [AuthService], //JwtGuard, JwtStrategy, RolesGuard, UserService
-  controllers: [AuthController], //UserController
-  exports: [AuthService], //UserService
+  providers: [AuthService, UserService, JwtGuard, JwtStrategy], // RolesGuard
+  controllers: [AuthController, UserController],
+  exports: [AuthService, UserService],
 })
 export class AuthModule {}
