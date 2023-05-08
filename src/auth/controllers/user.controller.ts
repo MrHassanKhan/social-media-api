@@ -10,7 +10,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { UserService } from '../services/user.service';
-import { Observable } from 'rxjs/internal/Observable';
+import { Observable } from 'rxjs';
 import { User } from '../models/user.class';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { removeFile, saveImageToStorage } from '../helpers/image-storage';
@@ -27,6 +27,17 @@ export class UserController {
   findUserById(@Param('userId') userStringId: string): Observable<User> {
     const userId = parseInt(userStringId);
     return this.userService.findUserById(userId);
+  }
+
+  @UseGuards(JwtGuard)
+  @Get('profileimage')
+  findImage(@Request() req, @Res() res) {
+    const userId = req.user.id;
+    return this.userService.findImageNameByUserId(parseInt(userId)).pipe(
+      switchMap((imageName: string) => {
+        return of(res.sendFile(imageName, { root: './images' }));
+      }),
+    );
   }
 
   @UseGuards(JwtGuard)
@@ -51,27 +62,6 @@ export class UserController {
         }
         removeFile(fullImagePath);
         return of({ error: 'File content does not match extension!' });
-      }),
-    );
-  }
-
-  @UseGuards(JwtGuard)
-  @Get('profileimage')
-  findImage(@Request() req, @Res() res) {
-    const userId = req.user.id;
-    return this.userService.findImageNameByUserId(parseInt(userId)).pipe(
-      switchMap((imageName: string) => {
-        return of(res.sendFile(imageName, { root: './images' }));
-      }),
-    );
-  }
-
-  @Get('user-name')
-  findUserImageName(@Request() req): Observable<any> {
-    const userId = req.user.id;
-    return this.userService.findUserById(parseInt(userId)).pipe(
-      map((user: User) => {
-        return { name: user.firstName + ' ' + user.lastName };
       }),
     );
   }
