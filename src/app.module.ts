@@ -2,6 +2,10 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
+import { APP_FILTER } from '@nestjs/core';
+import { AllExceptionsFilter } from './core/all-exception-filter';
+import { FileModule } from './file/file.module';
+import { FeedModule } from './feed/feed.module';
 
 @Module({
   imports: [
@@ -17,8 +21,15 @@ import { AuthModule } from './auth/auth.module';
       synchronize: true, // shouldn't be used in production - may lose data
     }),
     AuthModule,
+    FileModule,
+    FeedModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
+  ],
 })
 export class AppModule {}

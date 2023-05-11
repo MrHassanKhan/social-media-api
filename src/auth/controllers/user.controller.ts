@@ -3,20 +3,20 @@ import {
   Get,
   Param,
   Post,
-  Request,
-  Res,
-  UploadedFile,
   UseGuards,
-  UseInterceptors,
+  Request,
+  Put,
+  Body,
 } from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { Observable } from 'rxjs';
 import { User } from '../models/user.class';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { removeFile, saveImageToStorage } from '../helpers/image-storage';
-import { map, of, switchMap } from 'rxjs';
-import { join } from 'path';
+
 import { JwtGuard } from '../guards/jwt.guard';
+import {
+  FriendRequest,
+  FriendRequestStatus,
+} from '../models/friend-request.interface';
 
 @Controller('user')
 export class UserController {
@@ -30,39 +30,49 @@ export class UserController {
   }
 
   @UseGuards(JwtGuard)
-  @Get('profileimage')
-  findImage(@Request() req, @Res() res) {
-    const userId = req.user.id;
-    return this.userService.findImageNameByUserId(parseInt(userId)).pipe(
-      switchMap((imageName: string) => {
-        return of(res.sendFile(imageName, { root: './images' }));
-      }),
+  @Post('friend-request/send/:receiverId')
+  sendFriendRequest(
+    @Param('receiverId') receiverStringId: string,
+    @Request() req,
+  ): Observable<FriendRequest | { error: string }> {
+    const receiverId = parseInt(receiverStringId);
+    return this.userService.sendFriendRequest(receiverId, req.user);
+  }
+
+  @UseGuards(JwtGuard)
+  @Get('friend-request/status/:receiverId')
+  getFriendRequestStatus(
+    @Param('receiverId') receiverStringId: string,
+    @Request() req,
+  ): Observable<FriendRequestStatus> {
+    const receiverId = parseInt(receiverStringId);
+    return this.userService.getFriendRequestStatus(receiverId, req.user);
+  }
+
+  @UseGuards(JwtGuard)
+  @Put('friend-request/response/:friendRequestId')
+  respondToFriendRequest(
+    @Param('friendRequestId') friendRequestStringId: string,
+    @Body() statusResponse: FriendRequestStatus,
+  ): Observable<FriendRequestStatus | { error: string }> {
+    const friendRequestId = parseInt(friendRequestStringId);
+    return this.userService.respondToFriendRequest(
+      statusResponse.status,
+      friendRequestId,
     );
   }
 
   @UseGuards(JwtGuard)
-  @Post('upload')
-  @UseInterceptors(FileInterceptor('file', saveImageToStorage))
-  uploadImage(
-    @UploadedFile() file: Express.Multer.File,
+  @Get('friend-request/me/received-requests')
+  getFriendRequestsFromRecipients(
     @Request() req,
-  ): Observable<{ modifiedFileName: string } | { error: string }> {
-    const fileName = file?.filename;
-    if (!fileName) return of({ error: 'File must be a png, jpg/jpeg' });
-    const imagesFolderPath = join(process.cwd(), 'images');
-    const fullImagePath = join(imagesFolderPath + '/' + fileName);
-    return of(req.user.id).pipe(
-      switchMap((userId: number) => {
-        if (userId) {
-          return this.userService.updateUserImageById(userId, fileName).pipe(
-            map(() => ({
-              modifiedFileName: fileName,
-            })),
-          );
-        }
-        removeFile(fullImagePath);
-        return of({ error: 'File content does not match extension!' });
-      }),
-    );
+  ): Observable<FriendRequestStatus[]> {
+    return this.userService.getFriendRequestsFromRecipients(req.user);
+  }
+
+  @UseGuards(JwtGuard)
+  @Get('friends/my')
+  getFriends(@Request() req): Observable<User[]> {
+    return this.userService.getFriends(req.user);
   }
 }
